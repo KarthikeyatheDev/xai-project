@@ -1,45 +1,45 @@
-import json
-import numpy as np
-from sentence_transformers import SentenceTransformer
-import faiss
-from tqdm import tqdm
 import os
+import json
+from tqdm import tqdm
+from dotenv import load_dotenv
+from huggingface_hub import InferenceClient
 
-INPUT_FILE = "data/processed/cases.json"
-VECTOR_PATH = "vectorstore/case_index.faiss"
-META_PATH = "vectorstore/meta.json"
+# ---------- CONFIG ----------
 
-CHUNK_SIZE = 500
+INPUT_DIR = "../data/processed_cases/structured"
+OUT_FILE = "../data/embeddings.json"
+MODEL_NAME = "sentence-transformers/all-MiniLM-L6-v2"
 
-model = SentenceTransformer("sentence-transformers/all-MiniLM-L6-v2")
+# ----------------------------
 
-def chunk_text(text, size=500):
-    words = text.split()
-    for i in range(0, len(words), size):
-        yield " ".join(words[i:i+size])
+load_dotenv()
+HF_TOKEN = os.getenv("HF_TOKEN")
 
-with open(INPUT_FILE) as f:
-    cases = json.load(f)
+client = InferenceClient(
+    model=MODEL_NAME,
+    token=HF_TOKEN
+)
 
-texts = []
-metadata = []
+embeddings_db = []
 
-for case in tqdm(cases):
-    for chunk in chunk_text(case["text"]):
-        texts.append(chunk)
-        metadata.append({"case_id": case["case_id"]})
+files = [f for f in os.listdir(INPUT_DIR) if f.endswith(".json")]
 
-embeddings = model.encode(texts, show_progress_bar=True)
+for file in tqdm(files):
 
-dim = embeddings.shape[1]
-index = faiss.IndexFlatL2(dim)
-index.add(np.array(embeddings))
+    data = json.load(open(os.path.join(INPUT_DIR,file),encoding="utf8"))
 
-os.makedirs("vectorstore", exist_ok=True)
+    text = (
+        str(data.get("key_facts","")) + " " +
+        str(data.get("legal_issues","")) + " " +
+        str(data.get("reasoning_summary",""))
+    )
 
-faiss.write_index(index, VECTOR_PATH)
+    emb = client.feature_extraction(text).tolist()
 
-with open(META_PATH, "w") as f:
-    json.dump(metadata, f)
+    embeddings_db.append({
+        "case_id": file,
+        "embedding": emb
+    })
 
-print("Vector DB built:", len(texts))
+json.dump(embeddings_db, open(OUT_FILE,"w"))
+print("Embeddings created (cloud).")

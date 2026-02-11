@@ -1,23 +1,42 @@
-import faiss
+import os
 import json
-from sentence_transformers import SentenceTransformer
 import numpy as np
+from dotenv import load_dotenv
+from huggingface_hub import InferenceClient
 
-INDEX_PATH = "vectorstore/case_index.faiss"
-META_PATH = "vectorstore/meta.json"
+# ---------- CONFIG ----------
 
-model = SentenceTransformer("sentence-transformers/all-MiniLM-L6-v2")
+MODEL_NAME = "sentence-transformers/all-MiniLM-L6-v2"
+EMB_FILE = "../data/embeddings.json"
 
-index = faiss.read_index(INDEX_PATH)
+# ----------------------------
 
-with open(META_PATH) as f:
-    meta = json.load(f)
+load_dotenv()
+HF_TOKEN = os.getenv("HF_TOKEN")
 
-query = "land acquisition compensation dispute"
+client = InferenceClient(
+    model=MODEL_NAME,
+    token=HF_TOKEN
+)
 
-q_emb = model.encode([query])
-D, I = index.search(np.array(q_emb), 5)
+db = json.load(open(EMB_FILE))
 
-print("Top similar cases:")
-for i in I[0]:
-    print(meta[i])
+def cosine(a,b):
+    a,b=np.array(a),np.array(b)
+    return np.dot(a,b)/(np.linalg.norm(a)*np.linalg.norm(b))
+
+query = input("Enter case facts: ")
+
+q_emb = client.feature_extraction(query)
+
+scores=[]
+
+for item in db:
+    s = cosine(q_emb,item["embedding"])
+    scores.append((s,item["case_id"]))
+
+scores.sort(reverse=True)
+
+print("\nTop similar precedents:")
+for s,c in scores[:5]:
+    print(c, round(s,4))

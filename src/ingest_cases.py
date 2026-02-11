@@ -1,35 +1,28 @@
-import os
-from pathlib import Path
-from pypdf import PdfReader
+import os, json
+import pdfplumber
 from tqdm import tqdm
-import json
 
-BASE_DIR = Path(__file__).resolve().parent.parent
+RAW_DIR = "../data/raw_cases"
+OUT_DIR = "../data/processed_cases/raw_text"
 
-RAW_DIR = BASE_DIR / "data" / "raw_cases"
-OUT_FILE = BASE_DIR / "data" / "processed" / "cases.json"
+os.makedirs(OUT_DIR, exist_ok=True)
 
 def extract_text(pdf_path):
-    reader = PdfReader(pdf_path)
-    text = ""
-    for page in reader.pages:
-        text += page.extract_text() + "\n"
+    text=""
+    with pdfplumber.open(pdf_path) as pdf:
+        for page in pdf.pages:
+            t = page.extract_text()
+            if t:
+                text += t + "\n"
     return text
-
-cases = []
 
 for file in tqdm(os.listdir(RAW_DIR)):
     if file.endswith(".pdf"):
-        text = extract_text(RAW_DIR / file)
 
-        cases.append({
-            "case_id": file.replace(".pdf",""),
-            "text": text
-        })
+        text = extract_text(os.path.join(RAW_DIR,file))
 
-os.makedirs("data/processed", exist_ok=True)
+        out_path = os.path.join(OUT_DIR,file.replace(".pdf",".json"))
 
-with open(OUT_FILE, "w") as f:
-    json.dump(cases, f)
+        json.dump({"text":text}, open(out_path,"w",encoding="utf8"), indent=2)
 
-print("Cases saved:", len(cases))
+print("PDF ingestion completed.")
