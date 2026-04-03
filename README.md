@@ -66,13 +66,13 @@ Xai/
 ### 1. Clone & Setup
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/YOUR_REPO.git
+git clone https://github.com/KarthikeyatheDev/xai-project.git
 cd Xai
 
 # Create virtual environment
 python -m venv .venv
 source .venv/bin/activate  # Linux/Mac
-# .venv\Scripts\activate  # Windows
+.venv\Scripts\activate  # Windows
 
 # Install dependencies
 pip install -r requirements.txt
@@ -108,6 +108,7 @@ streamlit run src/app.py
 ## 🌐 Deployment
 
 **Streamlit Cloud** (Recommended):
+
 1. Push to GitHub
 2. Connect repo in Streamlit Cloud
 3. Set `src/app.py` as main file
