@@ -6,17 +6,14 @@
     "Kayer stole Haas' wallet, watch, and jewelry, and later returned to shoot Haas again",
     "Kayer was found guilty of premeditated first-degree murder and related offenses",
     "Kayer refused to cooperate with a mitigation specialist during sentencing",
-    "Arizona law required a judge to determine whether aggravating circumstances were established, and a judge could impose a sentence of death only if at least one such circumstance was shown and there was no mitigating circumstance that was sufficient to call for leniency",
-    "Kayer argued ineffective assistance of counsel because his attorneys failed to investigate mitigating circumstances",
-    "The sentencing judge held a 9-day evidentiary hearing and denied relief",
-    "The Ninth Circuit panel reversed, finding that Kayer's mitigation evidence likely affected his sentence",
-    "Arizona sought and was denied rehearing en banc by the Ninth Circuit"
+    "Arizona law required a judge to determine whether aggravating circumstances were established",
+    "The judge found two aggravating factors and one nonstatutory mitigator, sentencing Kayer to death"
   ],
   "legal_issues": [
-    "Whether Kayer's death sentence was imposed in violation of his Sixth Amendment right to effective assistance of counsel",
-    "Whether the Ninth Circuit erred in ordering issuance of a writ of habeas corpus despite ample room for reasonable disagreement about the prisoner's ineffective-assistance-of-counsel claim"
+    "Whether Kayer received ineffective assistance of counsel",
+    "Whether the state court's decision was unreasonable under AEDPA"
   ],
-  "decision": "The Court of Appeals erred in ordering issuance of a writ of habeas corpus despite ample room for reasonable disagreement about the prisoner's ineffective-assistance-of-counsel claim. The Court therefore granted the petition for certiorari and vacated the judgment below.",
-  "reasoning_summary": "The Antiterrorism and Effective Death Penalty Act of 1996 (AEDPA) restricts the power of federal courts to grant writs of habeas corpus based on claims that were 'adjudicated on the merits' by a state court. When a state court has applied clearly established federal law to reasonably determined facts in the process of adjudicating a claim on the merits, a federal habeas court may not disturb the state court's decision unless its error lies 'beyond any possibility for fairminded disagreement.' The Ninth Circuit clearly violated this Court's AEDPA jurisprudence by ordering issuance of a writ of habeas corpus despite ample room for reasonable disagreement about the prisoner's ineffective-assistance-of-counsel claim.",
+  "decision": "The Court of Appeals erred in ordering issuance of a writ of habeas corpus despite ample room for reasonable disagreement about the prisoner's ineffective-assistance-of-counsel claim. The Court of Appeals clearly violated this Court's AEDPA jurisprudence.",
+  "reasoning_summary": "The Court held that the state court's decision was not unreasonable under AEDPA, as there was ample room for reasonable disagreement about the prisoner's ineffective-assistance-of-counsel claim. The Court of Appeals erred in ordering a writ of habeas corpus.",
   "outcome_label": "dismissed"
 }

@@ -19,7 +19,6 @@ PASSWORD = os.getenv("NEO4J_PASSWORD")
 
 driver = GraphDatabase.driver(URI, auth=(USER, PASSWORD))
 
-print("Neo4j_uri: ", URI)
 # -------- GRAPH SEARCH --------
 
 
