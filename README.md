@@ -1,114 +1,151 @@
-# XAI: Case Law Retrieval System
+# ⚖️ Legal Decision Support System (XAI + Graph RAG)
 
-## Overview
+An AI-powered system that analyzes legal case PDFs, retrieves similar precedents using **hybrid retrieval (vector + graph)**, predicts outcomes, and provides **explainable insights**.
 
-This project implements a **semantic search and retrieval system for legal cases** using embeddings and vector similarity search. It enables intelligent case lookup by finding semantically similar cases to a given query, demonstrating **Explainable AI (XAI)** principles through case-based reasoning.
+[![Streamlit](https://img.shields.io/badge/Streamlit-FF4B4B?style=for-the-badge&logo=streamlit&logoColor=white)](https://streamlit.io/)
+[![Neo4j](https://img.shields.io/badge/Neo4j-4793D2?style=for-the-badge&logo=neo4j&logoColor=white)](https://neo4j.com/)
+[![Python](https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://python.org/)
 
-## Features
+## 🚀 Features
 
-- **PDF Case Ingestion**: Automatically extracts and processes text from PDF case documents
-- **Text Embedding**: Converts case documents into semantic embeddings using sentence transformers
-- **Vector Database**: Utilizes FAISS (Facebook AI Similarity Search) for efficient similarity search
-- **Semantic Retrieval**: Finds the most relevant cases based on semantic similarity to queries
-- **Scalable Architecture**: Chunked text processing for handling large documents
+- 📄 **Upload legal case PDFs** for instant analysis
+- 🤖 **LLM-based structured parsing** into JSON format
+- 🔍 **Hybrid Retrieval System**:
+  - Vector similarity search (embeddings)
+  - Graph-based reasoning (Neo4j)
+- ⚖️ **Outcome Prediction** (allowed/dismissed/etc.)
+- 🧠 **Explainable AI (XAI)**:
+  - Most influential precedent cases
+  - Key legal factors driving decisions
+  - Counterfactual "what-if" analysis
 
-## Project Structure
+## 🏗️ Project Workflow
 
 ```
-├── README.md                          # Project documentation
-├── requirements.txt                   # Python dependencies
+Raw PDFs → Text Extraction → LLM Parsing (JSON) 
+    ↓
+Embeddings (Vector DB) + Graph (Neo4j)
+    ↓
+Hybrid Retrieval → Outcome Prediction → XAI Insights
+```
+
+## 📁 Project Structure
+
+```
+Xai/
 ├── data/
-│   ├── raw_cases/                    # Input: PDF case files
-│   └── processed/
-│       └── cases.json                # Extracted case data in JSON format
+│   ├── raw_cases/          # Input PDFs
+│   ├── processed_cases/
+│   │   ├── raw_text/       # Extracted text
+│   │   └── structured/     # Parsed JSON
+│   ├── embeddings.json
+│   └── graph/
+│       ├── nodes.json
+│       └── edges.json
 ├── src/
-│   ├── ingest_cases.py              # Extract text from PDF files
-│   ├── build_embeddings.py          # Generate embeddings and build vector index
-│   └── retrieval_test.py            # Test semantic search functionality
-└── vectorstore/
-    ├── case_index.faiss             # FAISS vector index
-    └── meta.json                    # Metadata mapping for retrieved cases
+│   ├── app.py              # Streamlit frontend
+│   ├── ingest_cases.py     # PDF → text extraction
+│   ├── llm_parse_cases.py  # LLM parsing to JSON
+│   ├── build_embeddings.py # Generate embeddings
+│   ├── graph_insert.py     # Neo4j population
+│   ├── graph_retrieval.py  # Graph-based retrieval
+│   ├── hybrid_retrieval.py # Combined vector+graph
+│   ├── outcome_pred.py     # Outcome prediction
+│   ├── xai.py              # Explainability module
+│   └── parse_uploaded_cases.py
+└── requirements.txt
 ```
 
-## Workflow
+## ⚙️ Quick Start
 
-### 1. Data Ingestion (`ingest_cases.py`)
-- Reads PDF files from `data/raw_cases/`
-- Extracts text content from each PDF
-- Stores extracted text and case IDs in `data/processed/cases.json`
-- Output: JSON file containing case_id and full text for each case
+### Prerequisites
+- Python 3.8+
+- Neo4j (local or AuraDB)
+- Hugging Face account (for Inference API)
 
-### 2. Embedding Generation (`build_embeddings.py`)
-- Loads processed case data from JSON
-- Chunks case text into 500-word segments for efficient processing
-- Generates semantic embeddings using `sentence-transformers/all-MiniLM-L6-v2` model
-- Builds FAISS index with L2 distance metric for similarity search
-- Saves vector index and metadata to `vectorstore/`
-- Output: FAISS index file and metadata JSON
+### 1. Clone & Setup
 
-### 3. Retrieval Testing (`retrieval_test.py`)
-- Loads the FAISS vector index and metadata
-- Takes a query string (e.g., "land acquisition compensation dispute")
-- Encodes the query into embeddings
-- Retrieves top-k most similar case chunks using FAISS
-- Displays metadata of matching cases
-
-## Dependencies
-
-- **faiss-cpu**: FAISS library for similarity search
-- **sentence-transformers**: Pre-trained models for text embeddings
-- **pypdf**: PDF text extraction
-- **numpy/pandas**: Data processing
-- **tqdm**: Progress bars
-
-See `requirements.txt` for complete dependency list.
-
-## Getting Started
-
-### Installation
 ```bash
+git clone https://github.com/YOUR_USERNAME/YOUR_REPO.git
+cd Xai
+
+# Create virtual environment
+python -m venv .venv
+source .venv/bin/activate  # Linux/Mac
+# .venv\Scripts\activate  # Windows
+
+# Install dependencies
 pip install -r requirements.txt
 ```
 
-### Usage
+### 2. Configure Environment
 
-1. **Place PDF case files** in `data/raw_cases/`
+Create `.env` file:
 
-2. **Ingest and process cases**:
-   ```bash
-   python src/ingest_cases.py
-   ```
+```env
+# Hugging Face
+HF_TOKEN=your_huggingface_token
 
-3. **Build the vector index**:
-   ```bash
-   python src/build_embeddings.py
-   ```
+# Neo4j
+NEO4J_URI=bolt://localhost:7687
+NEO4J_USER=neo4j
+NEO4J_PASSWORD=your_neo4j_password
+```
 
-4. **Test retrieval**:
-   ```bash
-   python src/retrieval_test.py
-   ```
+### 3. Build Knowledge Base (One-time)
 
-## Model Details
+```bash
+# Start Neo4j first and make sure the instance is running!
+python src/setup.py
+```
 
-- **Embedding Model**: `sentence-transformers/all-MiniLM-L6-v2`
-  - Lightweight and efficient
-  - 384-dimensional embeddings
-  - Optimized for semantic similarity tasks
-  
-- **Vector Index**: FAISS IndexFlatL2
-  - Uses L2 Euclidean distance metric
-  - Suitable for exact similarity search on moderate data sizes
+### 4. Launch Application
 
-## Use Cases
+```bash
+streamlit run src/app.py
+```
 
-- **Legal Research**: Find precedent cases relevant to current disputes
-- **Case Analysis**: Identify similar cases for comparative analysis
-- **Knowledge Retrieval**: Semantic search through large case law databases
-- **Legal Decision Support**: Provide relevant case references for explainable recommendations
+## 🌐 Deployment
 
-## Notes
+**Streamlit Cloud** (Recommended):
+1. Push to GitHub
+2. Connect repo in Streamlit Cloud
+3. Set `src/app.py` as main file
+4. Add secrets (HF_TOKEN, Neo4j creds)
 
-- Text is chunked into 500-word segments to balance context preservation with computational efficiency
-- The FAISS index uses exact search (IndexFlatL2); consider approximate methods (HNSW, IVF) for larger datasets
-- Metadata is maintained separately to associate retrieved chunks back to original cases
+## 📊 Sample Output
+
+- **Predicted Outcome**: "Dismissed" (85% confidence)
+- **Top 3 Similar Cases**: Case A, B, C with reasoning
+- **Key Factors**: Jurisdiction, Precedent Strength, Evidence Quality
+- **Counterfactual**: "If evidence was stronger → 65% chance of approval"
+
+## 🛠️ Tech Stack
+
+| Component | Technology |
+|-----------|------------|
+| Frontend | Streamlit |
+| LLM | HuggingFace Inference API |
+| Graph DB | Neo4j |
+| Embeddings | Sentence Transformers |
+| Processing | NumPy, Python |
+
+## ⚠️ Important Notes
+
+- Ensure Neo4j is running before `setup.py`
+- LLM responses may vary slightly between runs
+- Graph retrieval provides better causal reasoning than vector-only
+- Start with small PDF batch for testing
+
+## 🔮 Future Improvements
+
+- [ ] ML/DL-based outcome prediction model
+- [ ] Interactive UI (charts, case highlighting)
+- [ ] Scalable vector DB (FAISS/Pinecone)
+- [ ] FastAPI backend + REST API
+- [ ] Multi-jurisdiction support
+
+## 👨‍💻 Author
+
+**Karthikeya Mohan**  
+Vellore, Tamil Nadu, India
