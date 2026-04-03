@@ -4,3 +4,4 @@ Pypdf2
 tqdm
 numpy
 pandas
+dotenv
