@@ -7,14 +7,9 @@ from collections import defaultdict
 # ------------ CONFIG ----------------
 
 STRUCTURED_DIR = "../data/processed_cases/structured"
-
-# Choose any REAL case as query
-QUERY_CASE = "Jallikattu-Judgement.json"
-
 TOP_K = 5
 
 # ------------------------------------
-
 
 load_dotenv()
 
@@ -22,110 +17,76 @@ URI = os.getenv("NEO4J_URI")
 USER = os.getenv("NEO4J_USER")
 PASSWORD = os.getenv("NEO4J_PASSWORD")
 
-driver = GraphDatabase.driver(
-    URI,
-    auth=(USER, PASSWORD)
-)
+driver = GraphDatabase.driver(URI, auth=(USER, PASSWORD))
+
+
+# -------- GRAPH SEARCH --------
 
 
 def graph_search(tx, facts, issues):
 
     results = []
 
-    # Search by Facts
-
     for fact in facts:
-
         res = tx.run(
             """
             MATCH (c:Case)-[:HAS_FACT]->(f:Fact)
             WHERE toLower(f.text) CONTAINS toLower($fact)
             RETURN c.id AS case_id
             """,
-            fact=fact
+            fact=fact,
         )
-
         results += [r["case_id"] for r in res]
 
-
-    # Search by Issues
-
     for issue in issues:
-
         res = tx.run(
             """
             MATCH (c:Case)-[:HAS_ISSUE]->(i:Issue)
             WHERE toLower(i.text) CONTAINS toLower($issue)
             RETURN c.id AS case_id
             """,
-            issue=issue
+            issue=issue,
         )
-
         results += [r["case_id"] for r in res]
-
 
     return results
 
 
-def rank_cases(case_list):
+# -------- MAIN FUNCTION --------
+
+
+def graph_retrieve(query_case):
+
+    path = os.path.join(STRUCTURED_DIR, query_case)
+
+    if not os.path.exists(path):
+        print("Missing file:", path)
+        return []
+
+    data = json.load(open(path, encoding="utf8"))
+
+    facts = data.get("key_facts", [])
+    issues = data.get("legal_issues", [])
+
+    with driver.session() as session:
+        res = session.execute_read(graph_search, facts, issues)
 
     scores = defaultdict(int)
 
-    for c in case_list:
+    for c in res:
         scores[c] += 1
 
-    ranked = sorted(
-        scores.items(),
-        key=lambda x: x[1],
-        reverse=True
-    )
+    ranked = sorted(scores.items(), key=lambda x: x[1], reverse=True)
 
     return ranked[:TOP_K]
 
 
-def main():
+# -------- TEST ONLY --------
 
-    query_path = os.path.join(
-        STRUCTURED_DIR,
-        QUERY_CASE
-    )
+# if __name__ == "__main__":
+#     results = graph_retrieve("Jallikattu-Judgement.json")
 
-    data = json.load(open(query_path, encoding="utf8"))
+#     print("\nTop Graph Retrieved Cases:\n")
 
-    facts = data["key_facts"]
-    issues = data["legal_issues"]
-
-    print("\nQuery Case:", QUERY_CASE)
-
-    print("\nFacts:")
-    for f in facts:
-        print("-", f)
-
-    print("\nIssues:")
-    for i in issues:
-        print("-", i)
-
-
-    with driver.session() as session:
-
-        retrieved = session.execute_read(
-            graph_search,
-            facts,
-            issues
-        )
-
-
-    ranked = rank_cases(retrieved)
-
-
-    print("\nTop Graph Retrieved Cases:\n")
-
-    for case,score in ranked:
-
-        if case != QUERY_CASE:
-            print(case,"score:",score)
-
-
-main()
-
-driver.close()
+#     for case, score in results:
+#         print(case, "score:", score)

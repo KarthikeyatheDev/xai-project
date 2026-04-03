@@ -106,5 +106,3 @@ for file in tqdm(files):
     process_file(path)
 
 print("\nGraph insertion complete.")
-
-driver.close()

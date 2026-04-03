@@ -1,21 +1,18 @@
 import os
 import json
 import numpy as np
-from neo4j import GraphDatabase
+from collections import defaultdict
 from dotenv import load_dotenv
 from huggingface_hub import InferenceClient
-from collections import defaultdict
+
+from graph_retreival import graph_retrieve  # ✅ use clean graph file
 
 # ------------ CONFIG ----------------
 
 STRUCTURED_DIR = "../data/processed_cases/structured"
-
-QUERY_CASE = "Jallikattu-Judgement.json"
-
 EMBED_FILE = "../data/embeddings.json"
 
 TOP_K = 5
-
 VECTOR_WEIGHT = 0.5
 GRAPH_WEIGHT = 0.5
 
@@ -26,143 +23,56 @@ EMBED_MODEL = "sentence-transformers/all-MiniLM-L6-v2"
 load_dotenv()
 
 HF_TOKEN = os.getenv("HF_TOKEN")
-
-client = InferenceClient(
-    token=HF_TOKEN
-)
-
-URI = os.getenv("NEO4J_URI")
-USER = os.getenv("NEO4J_USER")
-PASSWORD = os.getenv("NEO4J_PASSWORD")
-
-driver = GraphDatabase.driver(
-    URI,
-    auth=(USER, PASSWORD)
-)
+client = InferenceClient(token=HF_TOKEN)
 
 
-# ---------- VECTOR PART --------------
+# -------- VECTOR --------
 
 def embed_query(text):
-
-    emb = client.feature_extraction(
-        text,
-        model=EMBED_MODEL
-    )
-
+    emb = client.feature_extraction(text, model=EMBED_MODEL)
     return np.array(emb).flatten()
 
 
-def cosine(a,b):
-
-    return np.dot(a,b) / (np.linalg.norm(a)*np.linalg.norm(b))
+def cosine(a, b):
+    return np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b))
 
 
 def vector_retrieve(query_case):
 
-    embeddings_db = json.load(open(EMBED_FILE))
+    path = os.path.join(STRUCTURED_DIR, query_case)
 
-    data = json.load(open(
-        os.path.join(STRUCTURED_DIR,query_case),
-        encoding="utf8"
-    ))
+    if not os.path.exists(path):
+        print("Missing file:", path)
+        return {}
 
-    text = (
-        " ".join(data["key_facts"])
-        + " "
-        + " ".join(data["legal_issues"])
-    )
+    data = json.load(open(path, encoding="utf8"))
+
+    text = " ".join(data.get("key_facts", [])) + " " + " ".join(data.get("legal_issues", []))
 
     query_vec = embed_query(text)
+
+    embeddings_db = json.load(open(EMBED_FILE))
 
     scores = {}
 
     for item in embeddings_db:
-
         case_id = item["case_id"]
-
         vec = np.array(item["embedding"])
 
-        sim = cosine(query_vec,vec)
-
+        sim = cosine(query_vec, vec)
         scores[case_id] = sim
 
-
     return scores
 
 
-# ---------- GRAPH PART ---------------
-
-
-def graph_search(tx,facts,issues):
-
-    results=[]
-
-    for fact in facts:
-
-        res = tx.run(
-        """
-        MATCH (c:Case)-[:HAS_FACT]->(f:Fact)
-        WHERE toLower(f.text) CONTAINS toLower($fact)
-        RETURN c.id AS case_id
-        """,
-        fact=fact
-        )
-
-        results += [r["case_id"] for r in res]
-
-
-    for issue in issues:
-
-        res = tx.run(
-        """
-        MATCH (c:Case)-[:HAS_ISSUE]->(i:Issue)
-        WHERE toLower(i.text) CONTAINS toLower($issue)
-        RETURN c.id AS case_id
-        """,
-        issue=issue
-        )
-
-        results += [r["case_id"] for r in res]
-
-
-    return results
-
-
-def graph_retrieve(query_case):
-
-    data=json.load(open(
-        os.path.join(STRUCTURED_DIR,query_case),
-        encoding="utf8"
-    ))
-
-    facts=data["key_facts"]
-    issues=data["legal_issues"]
-
-    with driver.session() as session:
-
-        res=session.execute_read(
-            graph_search,
-            facts,
-            issues
-        )
-
-    scores=defaultdict(int)
-
-    for c in res:
-        scores[c]+=1
-
-    return scores
-
-
-# ---------- HYBRID COMBINE -----------
-
+# -------- HYBRID --------
 
 def hybrid(query_case):
 
     vector_scores = vector_retrieve(query_case)
+    graph_results = graph_retrieve(query_case)
 
-    graph_scores = graph_retrieve(query_case)
+    graph_scores = dict(graph_results)
 
     final_scores = {}
 
@@ -170,40 +80,22 @@ def hybrid(query_case):
 
     for case in vector_scores:
 
-        v = vector_scores.get(case,0)
+        v = vector_scores.get(case, 0)
+        g = graph_scores.get(case, 0) / max_graph
 
-        g = graph_scores.get(case,0) / max_graph
+        final_scores[case] = VECTOR_WEIGHT * v + GRAPH_WEIGHT * g
 
-        score = (
-            VECTOR_WEIGHT*v
-            +
-            GRAPH_WEIGHT*g
-        )
-
-        final_scores[case] = score
-
-
-    ranked = sorted(
-        final_scores.items(),
-        key=lambda x:x[1],
-        reverse=True
-    )
+    ranked = sorted(final_scores.items(), key=lambda x: x[1], reverse=True)
 
     return ranked[:TOP_K]
 
 
-# -------- RUN -----------------------
+# -------- TEST --------
 
+# if __name__ == "__main__":
+#     results = hybrid("Jallikattu-Judgement.json")
 
-results = hybrid(QUERY_CASE)
+#     print("\nHybrid Retrieved Cases:\n")
 
-print("\nHybrid Retrieved Cases:\n")
-
-for case,score in results:
-
-    if case != QUERY_CASE:
-
-        print(case,"score:",round(score,3))
-
-
-driver.close()
+#     for case, score in results:
+#         print(case, "score:", round(score, 3))
