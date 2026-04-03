@@ -9,7 +9,7 @@ from graph_retreival import graph_retrieve  # ✅ use clean graph file
 
 # ------------ CONFIG ----------------
 
-STRUCTURED_DIR = "../data/processed_cases/structured"
+STRUCTURED_DIR = "data/processed_cases/structured"
 EMBED_FILE = "../data/embeddings.json"
 
 TOP_K = 5
@@ -27,6 +27,7 @@ client = InferenceClient(token=HF_TOKEN)
 
 
 # -------- VECTOR --------
+
 
 def embed_query(text):
     emb = client.feature_extraction(text, model=EMBED_MODEL)
@@ -47,7 +48,11 @@ def vector_retrieve(query_case):
 
     data = json.load(open(path, encoding="utf8"))
 
-    text = " ".join(data.get("key_facts", [])) + " " + " ".join(data.get("legal_issues", []))
+    text = (
+        " ".join(data.get("key_facts", []))
+        + " "
+        + " ".join(data.get("legal_issues", []))
+    )
 
     query_vec = embed_query(text)
 
@@ -66,6 +71,7 @@ def vector_retrieve(query_case):
 
 
 # -------- HYBRID --------
+
 
 def hybrid(query_case):
 

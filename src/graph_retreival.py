@@ -6,7 +6,7 @@ from collections import defaultdict
 
 # ------------ CONFIG ----------------
 
-STRUCTURED_DIR = "../data/processed_cases/structured"
+STRUCTURED_DIR = "data/processed_cases/structured"
 TOP_K = 5
 
 # ------------------------------------

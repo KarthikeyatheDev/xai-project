@@ -6,7 +6,7 @@ from tqdm import tqdm
 
 # ---------------- CONFIG ----------------
 
-DATA_DIR = "../data/processed_cases/structured"
+DATA_DIR = "data/processed_cases/structured"
 
 # ----------------------------------------
 
@@ -16,10 +16,7 @@ URI = os.getenv("NEO4J_URI")
 USER = os.getenv("NEO4J_USER")
 PASSWORD = os.getenv("NEO4J_PASSWORD")
 
-driver = GraphDatabase.driver(
-    URI,
-    auth=(USER, PASSWORD)
-)
+driver = GraphDatabase.driver(URI, auth=(USER, PASSWORD))
 
 
 def insert_case(tx, case_id, title, facts, issues, decision, reasoning):
@@ -35,7 +32,7 @@ def insert_case(tx, case_id, title, facts, issues, decision, reasoning):
         id=case_id,
         title=title,
         decision=decision,
-        reasoning=reasoning
+        reasoning=reasoning,
     )
 
     # Insert Facts
@@ -49,7 +46,7 @@ def insert_case(tx, case_id, title, facts, issues, decision, reasoning):
             MERGE (c)-[:HAS_FACT]->(f)
             """,
             fact=fact,
-            case_id=case_id
+            case_id=case_id,
         )
 
     # Insert Legal Issues
@@ -64,7 +61,7 @@ def insert_case(tx, case_id, title, facts, issues, decision, reasoning):
             MERGE (c)-[:HAS_ISSUE]->(i)
             """,
             issue=issue,
-            case_id=case_id
+            case_id=case_id,
         )
 
 
@@ -74,24 +71,18 @@ def process_file(file_path):
 
     case_id = os.path.basename(file_path)
 
-    title = data.get("case_title","")
+    title = data.get("case_title", "")
 
-    facts = data.get("key_facts",[])
-    issues = data.get("legal_issues",[])
+    facts = data.get("key_facts", [])
+    issues = data.get("legal_issues", [])
 
-    decision = data.get("decision","")
-    reasoning = data.get("reasoning_summary","")
+    decision = data.get("decision", "")
+    reasoning = data.get("reasoning_summary", "")
 
     with driver.session() as session:
 
         session.execute_write(
-            insert_case,
-            case_id,
-            title,
-            facts,
-            issues,
-            decision,
-            reasoning
+            insert_case, case_id, title, facts, issues, decision, reasoning
         )
 
 
@@ -101,7 +92,7 @@ print("Inserting cases into Neo4j...\n")
 
 for file in tqdm(files):
 
-    path = os.path.join(DATA_DIR,file)
+    path = os.path.join(DATA_DIR, file)
 
     process_file(path)
 

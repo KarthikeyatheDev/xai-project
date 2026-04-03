@@ -6,7 +6,7 @@ from hybrid_retrieval import hybrid
 
 # -------- CONFIG --------
 
-STRUCTURED_DIR = "../data/processed_cases/structured"
+STRUCTURED_DIR = "data/processed_cases/structured"
 
 # ------------------------
 

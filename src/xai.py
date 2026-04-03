@@ -2,7 +2,7 @@ import os
 import json
 from collections import defaultdict
 
-STRUCTURED_DIR = "../data/processed_cases/structured"
+STRUCTURED_DIR = "data/processed_cases/structured"
 
 
 # -------- LOAD CASE --------

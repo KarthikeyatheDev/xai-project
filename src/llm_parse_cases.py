@@ -9,7 +9,7 @@ from huggingface_hub import InferenceClient
 # ------------------ CONFIG ------------------
 
 INPUT_DIR = "../data/processed_cases/raw_text"
-OUT_DIR = "../data/processed_cases/structured"
+OUT_DIR = "data/processed_cases/structured"
 
 MODEL_NAME = "Qwen/Qwen2.5-7B-Instruct"
 MAX_RETRIES = 3
