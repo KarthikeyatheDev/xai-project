@@ -7,7 +7,7 @@ from huggingface_hub import InferenceClient
 # ---------- CONFIG ----------
 
 INPUT_DIR = "data/processed_cases/structured"
-OUT_FILE = "../data/embeddings.json"
+OUT_FILE = "data/embeddings.json"
 MODEL_NAME = "sentence-transformers/all-MiniLM-L6-v2"
 
 # ----------------------------

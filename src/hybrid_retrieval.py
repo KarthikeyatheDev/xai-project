@@ -10,7 +10,7 @@ from graph_retreival import graph_retrieve  # ✅ use clean graph file
 # ------------ CONFIG ----------------
 
 STRUCTURED_DIR = "data/processed_cases/structured"
-EMBED_FILE = "../data/embeddings.json"
+EMBED_FILE = "data/embeddings.json"
 
 TOP_K = 5
 VECTOR_WEIGHT = 0.5
