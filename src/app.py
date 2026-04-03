@@ -1,7 +1,7 @@
 import streamlit as st
 import json
 from PyPDF2 import PdfReader
-
+import os
 from parse_uploaded_cases import parse_uploaded_case
 from xai import influential_factors_dynamic, counterfactual_analysis
 from outcome_pred import predict_outcome
@@ -36,7 +36,10 @@ if uploaded:
     st.success("Case parsed!")
 
     # -------- STEP 3: Save temp case --------
-    TEMP_PATH = "../data/processed_cases/structured/temp_case.json"
+    TEMP_DIR = "data/processed_cases/structured"
+    os.makedirs(TEMP_DIR, exist_ok=True)
+
+    TEMP_PATH = os.path.join(TEMP_DIR, "temp_case.json")
 
     with open(TEMP_PATH, "w", encoding="utf8") as f:
         json.dump(structured, f, indent=2)
